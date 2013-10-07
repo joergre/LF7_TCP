@@ -1,0 +1,421 @@
+Einführung Subnetting
+=====================
+Jörg Reuter <joerg@reuter.sc>
+:docbooktype: book
+:Author Initials: Jörg Reuter
+:Author: Jörg Reuter
+:date: 2013-09-30
+:toc:
+:icons:
+:numbered: 
+:website: https://github.com/joergre
+:revision: 0.2
+
+image:images/joerg_reuter[height=64]
+Jörg Reuter ist seit 2000 Studienrat an der Ferdinand-Braun-Schule in Fulda und unterrichtet dort Anwendungsentwicklung (C und Java) und Netzwerktechnik (Linux), Elektrotechnik (Berufsschule), Politik und katholische Religion (Fachoberschule). 
+
+Geboren 1970 in Gießen, 1990/1991 Zivildienst (24 Monate) am Universitätsklinikum Gießen in der Hals- Nasen- und Ohrenklinik. Während des Zivildienstes Fernstudium an der Fernuniversität Hagen (Elektrotechnik). 1991-1997 Studium der Elektrotechnik an der TU Darmstadt. 1997/1998 für einen privaten Bildungsträger in Gießen tätig. 1998 Referendar an der Ferdinand-Braun-Schule.
+
+ 
+
+.Dieses Dokument
+**********************************************************************
+Dieses Dokument wurde in AsciiDoc erstellt und seine aktuelle Fassung ist unter https://github.com/joergre/[Github] verfügbar.
+**********************************************************************
+Warum Subnetting
+----------------
+IPv4-Adressen sind 4 Byte lang und entsprechen damit 4,3 Milliarden (2^32) unterschiedlichen IP-Adressen. Das IP-Protokoll ermöglicht die Übertragung von Daten über die Netzwerkverbindungen. Allerdings muss dieser Adressraum systematisch aufgeteilt werden um das Datenvolumen effizient an die richtigen Geräte auszuliefern. Ein Router, der die Verbindung zwischen unterschiedlichen Netzwerken ermöglicht wäre mit 4,3 Milliarden Einträgen völlig überfordert. Subnetting ist eine Methode um IP-Adressen in Blöcken zusammen zufassen um den Datenverkehr sinnvoll zu koordinieren und Zuständigkeitsbereiche zu definieren.
+
+Historische Entwicklung
+----------------------
+Am Anfang des Internets waren alle Computer in einem Netz und jeder Computer konnte an hand von Tabellen sehen, wie welcher Computer zu erreichen war. Die Tabellen wurden damals noch von Hand gepflegt.
+1981, als es immer noch wenige Computer im Internet gab und die meisten Teilnehmer Universitäten oder militärische Einrichtungen waren, es aber eine Größe erreichte, bei der sich über die Steuerung des Datenverkehrs Gedanken machen musste, wurden die IP-Bereiche einfach nach Größe und Region unterteilt. An der IP-Adresse konnte erkannt werden, wie groß das Teilnetzwerk ist und in welchem Land der Computer stand. Es wurden drei Klassen eingeführt: A, B und C. Die Entlastung der Router kam dadurch zustande, dass das "Core"-Netzwerk die Datenpakete nur noch zum entsprechenden Netzwerk transportierte und für die weiteren Verteilung der Router des Besitzers des Netzwerks verantwortlich war.
+
+* Class A: Das erste Bit einer IP-Adresse ist eine 0, dann ist die erste dezimale Zahl oder die ersten 8 Bit der binären IP-Adresse das sogenannte Network Prefix. Dies ergab 127 (2^7^) unterschiedliche Netzwerke mit je 16.777.214 (2^24^) Computern. Dabei mussten zwei Adressen abgezogen werden: 0.0.0.0 für die Default-Route und 127.0.0.1 für die Loopback-Adresse, um den eigenen Computer zu adressieren.
+* Class B: Die binär geschriebene IP beginnt mit 10 und die ersten zwei dezimalen Zahlen oder die ersten 16 Bit der binären IP-Adresse sind der Network Prefix. Damit lassen sich 16534 (2^14^) unterschiedliche Netzwerke bilden mit je 65634 (2^16^) Computern.
+* Class C: Die binär geschriebene IP-Adresse beginnt mit 110 und die ersten 24 Bit oder ersten drei dezimale Zahlen waren der Network Prefix. Das ergab 2097152 Netzwerke mit je 254 IP-Adressen.
+
+D und E sollen nur kurz erwähnt werden. 1110 (Class D) war für Multicasting und 1111 (Class E) für zukünftige Anwendungen reserviert. Diese beiden Klassen wurden später eingeführt und haben nie eine wesentliche Bedeutung erlangt.
+
+Der Erfolg des Internets hat erzwungen, dass bereits 1985 (also nur vier Jahre später) eine Weiterentwicklung nötig war. Praktisch war es so, dass die Anzahl der Class-C-Netzwerke schnell zur Neige ging. Die Lösung war, dass statt der Vergabe eines Class-C-Netzwerkes viele Class-B-Netzwerke vergeben wurden. Dadurch mussten die Router immer größere Tabellen verarbeiten, um die Pakete in das Zielnetzwerk zu leiten. Die Router kamen an ihre Grenzen, sodass schnell eine andere Lösung nötig war. Die neue Lösung sollte aber nicht das etablierte IP-Protokoll zu stark verändern.
+
+Die Einteilung in Klassen ist der Grund, warum es drei unterschiedliche private IP-Bereiche gibt:
+
+* Class A oder /8 mit den Adressen 10.0.0.0 bis 10.255.255.255
+* Class B oder /16 mit den Adressen 172.16.0.0 bis 172.31.255.255
+* Class C oder /24 mit den Adressen 192.168.0.0 bis 192.168.255.255
+
+Subnetting
+----------
+Es wurde die Idee entwickelt, aus dem zweistufigen Routing (Network-Prefix und Hostnummer) ein dreistufiges einzuführen. Hierzu wird der IP-Adresse noch eine Subnet-Number hinzugefügt. Diese Subnet-Nummer ermöglichte es Administratoren, dass Netzwerk vor Ort nach ihren Bedürfnissen aufzuteilen, ohne dass dieses im Core-Network beachtet werden musste. Für das Routing intern waren die jeweiligen Verantwortlichen zuständig.
+
+Exkurs Core-Netzwerk
+~~~~~~~~~~~~~~~~~~~
+Früher gab es das http://de.wikipedia.org/wiki/ARPANET[ARPANET (1962-1990)], das Anfangs mit allen anderen Netzwerken (Subnetze) verschaltet wurde. Dieses Netzwerk war nicht sonderlich groß, http://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Arpanet_logical_map%2C_march_1977.png/640px-Arpanet_logical_map%2C_march_1977.png[hier der Netzwerkkplan aller angeschlossenen Computer] (die Ferdinand-Braun-Schule alleine hat heute zehn mal mehr Rechner im Einsatz als am ganzen ARPANET angeschlossen waren). Damals war UNIX das Betriebssystem und C die Programmiersprache, die das ganze Netzwerk am Laufen hielten. Das Hochgeschwindigkeitsnetz hatte damals die unvostellbare Geschwindigkeit von 50kbit/s. 
+
+1986 wurde das NSFNet-Backbone gegründet für Forschung und Wissenschaft und 1983 das MILNET, das zum Defense Data Network weiterentwickelt wurde. Das MILNET war bereits in unterschiedliche Subnetze mit unterschiedlichen Sicherheitsstufen unterteilt. Aus dem MILNET entstand dann das NIPRNet. Seit 1983 ist TCP/IP das Übertragungsprotokoll im Internet, wobei es bereits 1973 entwickelt war. 
+
+Seit 1986 waren das ARPANET und das NSFNet das sogenannte Core-Netzwerk, wobei Ersteres schnell an Bedeutung verlor. Am 30. April 2005 wurde das NSFNet abgeschaltet. Seit dem wird der Zusammenschluss der Netze von kommerziellen Internetdienstleistern und großer privater Netze in Internetknoten (http://de.wikipedia.org/wiki/Internet-Knoten[CIX und IXP]) als Core-Netz bezeichnet.
+
+Network-Prefix
+~~~~~~~~~~~~~~
+Um festzulegen, welcher Anteil der IP-Adresse der Netzwerkanteil und welcher der Hostanteil war, wurde die Subnetzmaske eingeführt. Die Subnetzmaske sieht nach RFC 950 wie folgt aus: Sie besteht aus einer Folge von 1, die nicht unterbrochen sein darf, und danach einer Folge von 0. Damit konnten 25 unterschiedliche Subnetze eingerichtet werden (siehe Tabelle). Eine alternative Schreibweise ist das Zählen der 1 und diese dann hinter die IP schreiben: 192.168.178.1/24 entsprach also einem Class-C-Netzwerk oder in IP-Schreibweise 255.255.255.0. Ein Subnetz beginnt immer erst nach dem ersten Byte, das heißt die erste Zahl der Subnetzadresse ist immer 255.X.X.X. 
+
+Pro Byte sind damit nur folgende Kombinationen möglich:
+
+|=======
+|Binär | Dezimal
+|00000000 | 0
+|10000000 | 128
+|11000000 | 192
+|11100000 | 224
+|11110000 | 240
+|11111000 | 248
+|11111100 | 252
+|11111110 | 254
+|11111111 | 255
+|=======
+
+Beispiele
+~~~~~~~~~
+
+1. Die bekannteste Subnetzmaske ist 255.255.255.0 oder binär geschrieben: 11111111.111111111.11111111.00000000. Der Netzanteil ist 24 Bit lang und kann mit /24 abgekürzt werden.
+2. Die Subnetzmaske 255.254.255.0 ist falsch. Binär 11111111.111111110.11111111.0. Wir sehen eine Unterbrechung der Folge von 1 im zweiten Byte. Damit ist dies keine gültige Subnetzmaske.
+3. Die Subnetzmaske 255.255.64.0 ist falsch. Binär 11111111.11111111.01000000. Auch hier ist die Kette der 1 unterbrochen und damit nicht gültig.
+
+Die Und-Verknüpfung von Subnetmaske und IP-Adresse ergibt die Netzwerkadresse. 
+
+Die Subnetze /31 und /32 mit zwei IP-Adressen sind eigentlich nicht sinnvoll, da die eine Adresse durch die Netzwerkadresse belegt und die andere die http://de.wikipedia.org/wiki/Broadcast[Broadcastadresse] ist. Trotzdem werden diese Netze sehr häufig verwendet. Sie ergeben Sinn, wenn in dem Netz nur zwei Teilnehmer vorhanden sind, etwa zwei Router, die miteinander gekoppelt sind, z.B. DSL, Einwahlzugänge usw.
+
+Variable Length Subnet Mask (VLSM)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Auch dieses Verfahren hatte seine Probleme, da die einzelne Netzwerke nicht mit unterschiedlichen Größen aufgeteilt werden konnten. Bereits 1987 wurde daher die Variable Length Subnet Mask (RFC 1009) eingeführt. Die Subnetzmasken werden, wie oben beschrieben, erstellt. Nur können jetzt Subnetze verschieden groß sein.
+
+Classless Inter-Domain Routing (CIDR)
+-------------------------------------
+CIDR wurde 1993 als RFC 1517 bis 1520 veröffentlicht, da eine rasche Verknappung der IP-Adressen befürchtet wurde und die Router wegen immer größerer Routingtabellen bereits bald ihre Grenzen erreichen würden.
+
+Wichtig bei CIDR ist, dass es keine Klassen mehr gibt und dass beliebige IP-Blöcke zusammengefasst werden können, um die Routing-Tabellen zu verkleinern.
+
+Die Angabe der Subnetzmaske wurde für alle zur Pflicht. Ansonsten verhält sich CIDR wie Subnetting. Der große Unterschied ist, dass Subnetting von einem Administrator vor Ort verwaltet wird und er für das Routing verantwortlich ist. CIDR gilt für das Core-Netzwerk, dass die Netze der großen Firmen und Provider zusammenschaltet.
+
+Zusammenfassung
+~~~~~~~~~~~~~~~
+
+* Eine IP-Adresse benötigt zum Auffinden des entsprechenden Netzwerkgeräts immer eine Subnetzmaske.
+* Die Subnetzmaske beginnt immer mit einer Reihe von 1 und wird später von 0 abgelöst. 
+* Die logische Und-Verknüpfung zwischen Subnetzmaske und IP-Adresse ergibt die Netzadresse.
+* Subnetting, VLSM und CIDR basieren auf dem gleichen Prinzip. VLSM ist eine Erweiterung des Subnettings um unterschiedlich große Subnetze zu ermöglichen. CIDR wird im Core-Netzwerk angewandt, Subnetting vom jeweiligen Administrator.
+
+Deutsche Telekom
+~~~~~~~~~~~~~~~~
+Unter http://www.nirsoft.net/countryip/de.html[nirsoft.net] gibt es eine Liste der großen IP-Blöcke in Deutschland. In der Tabelle ist zu sehen, dass die Deutsche Telekom am 03. Oktober 2004 über 4,1 Millionen IP-Adressen zugeteilt bekommen hat (84.128.0.0). Die Core-Router geben alle Datenpakete für dieses Netz an definierte Übergabepunkte ab, hier der Internetknoten DE-CIX in Frankfurt. Für die Verteilung der Pakete innerhalb dieser 4,1 Millionen Geräte ist die Deutsche Telekom selbst verantwortlich. Auch die Unterteilung per Subnetting oder VLSM ist der Deutschen Telekom überlassen.
+
+Wenn sich der Block der Deutschen Telekom genauer angesehen wird, ist zu erkennen, dass er mit der IP 84.128.0.0 beginnt und mit 84.191.255.255 aufhört, binär also von 01010100.10000000.00000000.00000000 bis 01010100.10111111.11111111.11111111. Es wurden 4194304 IP-Adressen zugeteilt. Um dies darzustellen, werden 22 Bits benötigt (2^22^) und damit wird die Subnetzmaske /10 oder 255.192.0.0. 
+
+Gesucht: Subnetzmaske - gegeben: IP-Adresse und Anzahl Hosts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Gegeben ist eine IP-Adresse (im obigen Fall 84.128.0.0) und die Anzahl der Hosts (im Beispiel 4194304 Hosts). Gesucht ist die passende Subnetzmaske.
+
+.Vorgehen:
+1. Wie viele Bits werden benötigt, um die Anzahl der Hosts-1 darzustellen? 
+2. 32 minus Anzahl der Bits aus Schritt 1.
+3. Wir schreiben so viele 1, wie bei Schritt 2 herauskam und ergänzen mit der Zahl 0 auf 32 Stellen.
+4. Wir teilen die Zahl in 8er-Blöcke und wandeln Block für Block nach dezimal um und bekommen die Subnetzmaske.
+
+.Beispiel:
+1. 4194304-1 ist 4194303. Minus 1, da 0 bereits der erste Host ist. 4194303 ist binär 1111111111111111111111 und 22 Stellen lang.
+2. 32Bit-22Bit=10Bit
+3. 11111111110000000000000000000000 (10x 1 und 22x 0)
+4. 11111111.11000000.00000000.00000000 und nach dezimal umwandeln: 255.192.0.0. Damit ist die Subnetzmaske 255.192.0.0
+
+Telenet N.V.
+~~~~~~~~~~~~
+Der anschließende http://www.nirsoft.net/countryip/be.html[IP-Adressenblock ist nach Belgien gegangen]. 84.192.0.0 bis 84.199.255.255 wurden am 21. April 2004 der Telenet N.V. mit Sitz in  Mechelen zugeteilt. 
+Mit 
+
+whois 84.192.0.0
+
+schauen http://labs.fbs-fulda.info/Dokumente/Netzwerktechnik/ripe.txt[wir uns die RIPE-Informationen an]. Wir sehen unten den Eintrag Route: 84.192.0.0/15. Kann die /15 stimmen? Passen die http://www.nirsoft.net/countryip/be.html[524288 IP-Adressen] in  das Subnetz?
+
+Gesucht: Anzahl der Hosts - gegeben: Subnetzmaske
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.Vorgehen
+1. Anzahl der Bits für die Hostadresse abzählen. Also entweder 32 - die Zahl hinter dem Zeichen / oder die Anzahl der 0 in der binären Schreibweise.
+2. 2^Ergebnis vom 1. Schritt
+3. Achtung: Es kann sein, dass bei der Anzahl der Hostadressen die Netzwerk- und die Broadcastadresse abgezogen werden muss. Also Ergebnis vom 2. Schritt - 2.
+
+Exkurs Netzwerkadresse und Broadcastadresse
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Oft werden Netzwerk- und Broadcastadresse abgezogen von der Anzahl Host. Dies muss nicht unbedingt sein, insbesondere bei Prüfungen müssen beide Ergebnisse als richtig angesehen werden - Ausnahme: In der Aufgabe steht explizit, wie verfahren werden soll. 
+
+http://de.wikipedia.org/wiki/Subnetz[Hintergrund]
+
+Microsoft verwendete die Netzadresse bei Win 95, Win 98 und Win ME als Broadcast-Adresse. Wird keines dieser Betriebssysteme eingesetzt kann die Netzwerkadresse verwendet für ein Netzwerkgerät verwendet werden. 
+
+Die meisten modernen Betriebssysteme unterstützen ein Netzwerk ohne Broadcast - insbesondere, da es unter IPv6 der Broadcast nicht mehr unterstützt wird. In diesen Netzwerken kann auch die Broadcastadresse normal verwendet werden.
+
+Beispiel
+~~~~~~~~
+Wie viele IP-Adressen können in einem Netzwerk mit der Subnetzmaske /15 vergeben werden? Überprüfe die Angabe der http://www.nirsoft.net/countryip/be.html[Internetseite Nirsoft.net] mit 524288 IP-Adressen.
+
+1. Netzwerkmaske 15 Bit. Die IP-Adresse hat eine Länge von 32 Bit. Daraus folgt, dass für den Host-Anteil 32-15=17 Bit zur Verfügung stehen. 
+2. Damit lassen sich 2^17 unterschiedliche Kombinationen bilden, also 131072. Also kann die RIPE-Information 84.19.0.0/15 nicht den gesamten IP-Block adressieren.
+
+
+Aufgabe
+~~~~~~~
+Welche Subnetzmaske wird mindestens gebraucht um 524288 IP-Adressen zu adressieren. Gehe von dem Netzwerk 84.192.0.0 aus.
+
+Hinweis
+~~~~~~~
+1. Wir denken daran, dass die 0 mitgezählt wird. Also wandeln wir 524288-1=524287 in eine Dualzahl um: 1111111111111111111 (19 mal 1).
+2. Wir brauchen also 19 Stellen, um alle 524288 Adressen darstellen zu können. Damit bleiben für die Netzwerkadresse noch 32-19 Bit übrig. 
+3. Also 13 Bit, damit ist die Subnetmaske /13 oder 255.248.0.0.
+
+Gegeben: IP-Adresse und Subnetzmaske - gesucht: Netzwerk- und Broadcastadresse
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.Vorgehen
+1. IP-Adresse und Subnetzmaske binär untereinander schreiben und mit "und" verknüpfen.
+2. Das Ergebnis aus Schritt 1 byteweise nach dezimal umwandeln ergibt die Netzwerkadresse. 
+3. Wir setzen den Hostanteil (der Teil, bei dem die Subnetzmaske binär 0 war) auf binär 1 und wandeln wieder byteweise nach dezimal um und erhalten die Broadcastadresse.
+4. Die Netzwerkadresse+1 ergibt die IP des ersten Netzwerkgeräts. Die Broadcastadresse-1 ergibt die Adresse des letzten Netzwerkgeräts.
+
+Beispiel
+~~~~~~~~
+Gebe bitte die Netzwerkadresse, die Broadcastadresse und die erste und letzte für Hosts verwendbare Adresse für das Netzwerk 84.192.0.0/13 an.
+
+1/2.) Netwerkadresse: Der Hostanteil wird 0 gesetzt. Dafür schreiben  wir die IP-Adresse binär auf mit der dazugehörigen Subnetzmaske und verknüpfen diese bitweise mit "und".
+
+01010100.11000000.00000000.00000000 (IP-Adresse binär)
+
+11111111.11111000.00000000.00000000 (Subnetmaske)
+
+01010100.11000000.00000000.00000000 (Netzadresse: 84.192.0.0)
+
+3.) Broadcast: Der Hostanteil wird auf 1 gesetzt. Dafür verwenden wir die binäre Netzadresse und Subnetzmaske und verbinden Subnetzmaske und IP-Adresse mit "und". Dann setzten wir alle Bits, die nicht zum Network-Prefix gehören, auf 1.
+
+01010100.11000000.00000000.00000000 (IP-Adresse binär)
+
+11111111.11111000.00000000.00000000 (Subnetmaske)
+
+01010100.11000111.11111111.11111111 (Broadcast: 84.199.255.255)
+
+4.) Erste verwendbare IP-Adresse: Netzadresse+1, also 84.192.0.1.
+
+Letzte verwendbare IP-Adresse: Broadcast-Adresse-1, also 84.199.255.254.
+
+Netzwerk in x Teilnetze aufteilen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.Vorgehen
+1. Wie viele Bits werden benötigt, um x darzustellen (x einfach nach binär umwandeln)?
+2. Die Zahl x zur Subnetzmaske addieren ergibt die neue Subnetzmaske.
+3. IP-Adresse und Subnetzmaske binär untereinander schreiben und mit "und" verknüpfen.
+4. Das Ergebnis aus 1. byteweise nach dezimal umwandeln ergibt die Netzwerkadresse. 
+5. Wir setzen den Hostanteil (der Teil bei dem die Subnetzmaske binär 0 war) auf binär 1 und wandeln wieder byteweise nach dezimal um und erhalten die Broadcastadresse.
+6. Die Netzwerkadresse+1 ergibt die IP des ersten Netzwerkgerätes. Die Broadcastadresse-1 ergibt die Adresse des letzten Netzwerkgeräts.
+
+Beispiel
+~~~~~~~~
+Wir bekommen das Netzwerk 84.192.0.0/13 zugeteilt. Wir möchten das Netzwerk in vier gleich große Teile aufteilen. Welche neue Subnetzmaske müssen wir für unser Netzwerk erstellen? Gebe bitte Netzwerkadresse, Broadcast und erste und letzte Host-Adresse für jedes Netzwerk an.
+
+1/2.) Um die Zahl 4 darzustellen, brauchen wir 4 Bits: 00, 01, 10, 11. Also müssen wir zu der Subnetzmaske /13 zwei Bits addieren und somit wird unsere neue Subnetzmaske /15.
+
+3/4.) Netzwerkadresse: Der Hostanteil wird 0 gesetzt. Dafür schreiben  wir die IP-Adresse binär mit der dazugehörigen Subnetzmaske auf und verknüpfen diese bitweise mit "und". Bitte vergleiche die Lösung mit der aus Aufgabe 3.
+
+01010100.11000000.00000000.00000000 (IP-Adresse binär)
+
+11111111.11111110.00000000.00000000 (Subnetmaske)
+
+01010100.11000000.00000000.00000000 (Netzadresse: 84.192.0.0)
+
+5.) Broadcast: Der Hostanteil wird auf 1 gesetzt. Dafür verwenden wir die binäre Netzadresse und Subnetzmaske und verbinden Subnetzmaske und IP-Adresse mit "und". Dann setzten wir alle Bits, die nicht zum Network-Prefix gehören auf 1.
+
+01010100.11000000.00000000.00000000 (IP-Adresse binär)
+
+11111111.11111110.00000000.00000000 (Subnetmaske)
+
+01010100.11000001.11111111.11111111 (Broadcast: 84.193.255.255)
+
+6.) Erste verwendbare IP-Adresse: Netzadresse+1, also 84.192.0.1.
+
+Letzte verwendbare IP-Adresse: Broadcast-Adresse-1, also 84.193.255.254.
+
+Wie hat Telenet N.V. ihr Netzwerk unterteilt?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Wir wissen durch die obige whois-Anfrage, dass die Firma Telenet N.V. ihren IP-Block unterteilt hat. Der erste Block lautet 84.19.0.0/15. Hat die Firma wirklich vier gleich große Bereiche gebildet oder arbeitet sie mit unterschiedlichen Subnetzgrößen? Dafür machen wir eine whois-Abfrage auf die IP-Adresse die nach dem 84.192.0.0/15-Block kommt, also 84.194.0.0. http://labs.fbs-fulda.info/Dokumente/Netzwerktechnik/ripe_194.txt[Wir sehen, das die Firma mit unterschiedlichen Subnetzen arbeitet.] 
+
+Aufgabe
+~~~~~~~~~~
+Stelle in einer Skizze dar, wie das Netzwerk der Telenet N.V. unterteilt ist. Das von der RIPE zugewiesene Netzwerk ist 84.192.0.0/13. Dieses wurde in ein 84.192.0.0/15 und ein 84.192.0.0/14 unterteilt. 
+
+Hinweis
+~~~~~~~
+Der IP-Bereich wurde wie im http://www.gliffy.com/go/publish/image/4923612/L.png[Bild] aufgeteilt.
+
+Wieviele Teilnetze kann ich bilden?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.Vorgehen
+1. Anzahl der Netzgeräte nach binär umwandeln. 
+2. 32 - Bit der Subnetzmaske - Anzahl der Stellen von 1.
+3. Alte Subnetzmaske + Ergebnis von 2 ergibt die Länge der neuen Subnetzmaske.
+4. 2^Ergebnis von 2 ergibt die Anzahl der neuen Subnetze
+Anmerkung: Bei alter Vorgehensweise bitte beachten, dass mit Anzahl der Netzgeräte+2 gerechnet werden muss - wegen der Netzwerk- und Broadcastadresse.
+
+Beispiel
+~~~~~~~~
+Wir sind Administrator bei der Telenet N.V. und sollen das uns zugewiesene Teilnetz unterteilen. Pro Netzwerk sollen 580 Netzwerkgeräte adressiert werden können. Wie viele Netzwerke können wir aus dem Netzwerk 84.192.0.0/15 bilden?
+
+1. 580 in dualer Schreibweise: 1001000100. Wir brauchen also 10 Bits.
+2. 32 Bit-15 Stellen der Subnetzmaske - 10 Stellen für die Host: 7 Bit für die Erweiterung der Subnetzmaske.
+3. Neue Subnetzmaske: 11111111.11111111.11111100.00000000 also 255.255.252.0
+4. Es können 2^7, also 128 Teilnetze gebildet werden.
+
+Berechnung der Teilnetze
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.Vorgehen
+1. Anzahl der Teilnetze-1 nach binär umwandeln. Wir subtrahieren 1, da 0 auch eine gültige Netzwerkadresse ist. Die Stellenanzahl zur Subnetzmaske addieren.
+2. Wir schreiben die IP-Adresse binär auf und setzen alle Bits ab der Stelle der alten Subnetzmaske 0.  Wir habe die erste Netzwerkadresse.
+3. Wir zählen den Bereich der "Verlängerung" der Subnetzmaske binär hoch und erhalten jeweils die nächste Netzwerkadresse
+4. Netzwerkadresse byteweise nach dezimal umwandeln und +1 rechnen: 1 Host-IP. 
+5. Netzwerkadresse des nächsten Netzwerkes -1: Broadcastadresse von dem Netzwerk vorher. Alternativ: Den Hostanteil des Netzwerkes binär auf 1 setzen und nach dezimal umwandeln. 
+6. Broadcastadresse -1: Letzte Host-Adresse.
+
+
+Beispiel
+~~~~~~~~
+Die Telenet N.V. hat ein Netzwerk mit 84.192.0.0/13 zugeteilt bekommen. Wir gehen davon aus, dass sie dieses Netzwerk in 4 gleich große Netzwerke unterteilt hat. Gebe bitte die neue Subnetzmaske, und die Netzwerkadressse, Broadcast und IP-Bereiche für die Netzwerkgeräte an.
+
+1.2.3.) Für 4 Subnetze brauchen wir 2 Bits: 00, 01, 10 und 11. Oder 4-1 als Dualzahl ergibt 11 also zwei Stellen. Damit ist unsere neue Subnetzmaske /15 oder 255.254.0.0
+2.) Die IP-Adresse binär lautet: 
+
+01010100.11000000.00000000.00000000
+
+11111111.11111110.00000000.00000000 (Neue Subnetzmaske binär)
+
+01010100.11000000.00000000.00000000 (1. Netzwerkadresse 00 dezimal: 84.192.0.0)
+
+01010100.11000010.00000000.00000000 (2. Netzwerkadresse 01 dezimal: 84.194.0.0)
+
+01010100.11000100.00000000.00000000 (3. Netzwerkardesse 10 dezimal: 84.196.0.0)
+
+01010100.11000110.00000000.00000000 (4. Netzwerkadresse 11 dezimal: 84.198.0.0)
+
+4.5.6.)
+
+.Netzwerk 84.192.0.0:
+* 1. Host-IP: 84.192.0.1
+* Broadcast: 84.193.255.255
+* Letze Host-IP: 84.193.255.254
+
+.Netzwerk 84.194.0.0
+* 1. Host-IP: 84.194.0.1
+* Broadcast: 84.195.255.255
+* Letzte Host-IP: 84.195.255.254
+
+.Netzwerk 84.196.0.0
+* 1. Host-IP: 84.196.0.1
+* Broadcast: 84.197.255.255
+* Letzte Host-IP: 84.197.255.254
+
+.Netzwerk 84.198.0.0
+* 1. Host-IP: 84.198.0.1
+* Broadcast: 84.199.255.255
+* Letzte Host-IP: 84.197.255.254
+
+Beispiel
+~~~~~~~~
+Die Telenet N.V. hat ein Netzwerk mit 84.192.0.0/15 zugeteilt bekommen. Wir gehen davon aus, dass sie dieses Netzwerk in 4 gleich große Netzwerke unterteilt hat. Gebe bitte die neue Subnetzmaske und die Netzwerkadresse, Broadcast und IP-Bereiche für die Netzwerkgeräte an. Der Unterschied bei diesem Beispiel ist die Bildung der Subnetzmaske über das  Oktett hinweg.
+
+Wie obengesehen brauchen wir 4 Bits.
+
+Alte Subnetzmaske:
+
+11111111.11111110.00000000.00000000 (255.254.0.0)
+
+Neue Subnetzmaske:
+
+11111111.11111111.10000000.00000000 (255.255.128.0)
+
+Berechnung der Netzwerkadresse:
+
+01010100.11000000.00000000.00000000 (IP-Adresse binär)
+
+11111111.11111111.10000000.00000000 (Neue Subnetzmaske)
+
+01010100.11000000.00000000.00000000 (Netzadresse 00: 84.192.0.0)
+
+01010100.11000000.10000000.00000000 (Netzadresse 01: 84.192.128.0)
+
+01010100.11000001.00000000.00000000 (Netzadresse 10: 84.193.0.0)
+
+01010100.11000001.10000000.00000000 (Netzadresse 11: 84.193.128.0)
+
+.Netzwerk 84.192.0.0
+* Erste IP: 84.192.0.1
+* Broadcast: 84.192.127.255
+* Letzte IP: 84.192.127.254
+
+.Netzwerk 84.192.128.0
+* Erste IP: 84.192.128.1
+* Broadcast: 84.192.255.255
+* Letzte IP: 84.192.255.254
+
+.Netzwerk 84.193.0.0
+* Erste IP: 84.193.0.1
+* Broadcast: 84.193.127.255
+* Letzte IP: 84.193.127.254
+
+.Netzwerk 84.193.128.0
+* Erste IP: 84.193.128.1
+* Broadcast: 84.193.255.255
+* Letzte IP: 84.193.255.254
+
+////
+; Copyright (c) Jörg Reuter
+; This documentation is owned by Jörg Reuter
+; and published under the german creative commons by-sa license
+; see:
+; http://creativecommons.org/licenses/by-sa/3.0/de/
+; http://creativecommons.org/licenses/by-sa/3.0/de/legalcode
+; english:
+; http://creativecommons.org/licenses/by-sa/3.0/
+; http://creativecommons.org/licenses/by-sa/3.0/legalcode
+; 
+////
+
+:Author:    Jörg Reuter
+:Email:     joerg@reuter
+:Date:      20.09.2011
+:Revision:  4.0.1
+
+== Copyright
+
+Das Copyright an diesem Skript liegt bei Jörg Reuter, Ferdinand-Braun-Schule Fulda.
+
+Dieses Skript ist veröffentlicht unter der creative commons Lizenz +
+'Namensnennung - Weitergabe unter gleichen Bedingungen' (by-sa). 
+
+image::images/cc-by-sa.png["CC by sa",width=100]
+
+Eine Beschreibung der Lizenz finden Sie hier: +
+http://creativecommons.org/licenses/by-sa/3.0/de/
+
+Der rechtsverbindliche Text der Lizenz befindet sich hier: +
+http://creativecommons.org/licenses/by-sa/3.0/de/legalcode
+
+Die Software von Jörg Reuter ist in weiten Teilen Open Source. +
+
+Wenn nicht anders angegeben, ist der Quellcode veröffentlicht unter der GPLv3:
+
+image::images/gplv3-127x51.png["",width=100]
+
+Der rechtsverbindliche Text der GPLv3 Lizenz ist hier einzusehen: +
+http://www.gnu.org/licenses/gpl.html
+
+Deutsche Übersetzung: +
+http://www.gnu.de/documents/gpl.de.html
